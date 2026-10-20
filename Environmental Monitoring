@@ -1,10 +1,10 @@
-#include <DHT.h>
+#include "DHT.h"
+
+#define DHTTYPE DHT11
 
 #define DHTPIN1 2
 #define DHTPIN2 3
-#define DHTTYPE DHT11
-
-#define WATER_SENSOR A0
+#define WATERPIN A0
 
 DHT dht1(DHTPIN1, DHTTYPE);
 DHT dht2(DHTPIN2, DHTTYPE);
@@ -15,39 +15,58 @@ void setup() {
   dht1.begin();
   dht2.begin();
 
-  Serial.println("Railway Cabinet Monitor");
+  Serial.println("================================");
+  Serial.println("Climate Monitor Starting");
+  Serial.println("================================");
 }
 
 void loop() {
 
-  float tempCabinet = dht1.readTemperature();
-  float humCabinet = dht1.readHumidity();
+  // Read temperature and humidity sensors
+  float temp1 = dht1.readTemperature();
+  float hum1  = dht1.readHumidity();
 
-  float tempExternal = dht2.readTemperature();
-  float humExternal = dht2.readHumidity();
+  float temp2 = dht2.readTemperature();
+  float hum2  = dht2.readHumidity();
 
-  int waterLevel = analogRead(WATER_SENSOR);
+  // Read water sensor
+  int waterValue = analogRead(WATERPIN);
 
-  Serial.println("-------------------------");
+  // Check if either DHT sensor failed
+  if (isnan(temp1) || isnan(hum1)) {
+    Serial.println("Sensor 1 read failed!");
+  }
 
-  Serial.print("Cabinet Temp: ");
-  Serial.print(tempCabinet);
-  Serial.println(" C");
+  if (isnan(temp2) || isnan(hum2)) {
+    Serial.println("Sensor 2 read failed!");
+  }
 
-  Serial.print("Cabinet RH: ");
-  Serial.print(humCabinet);
+  // Print sensor 1
+  Serial.print("Sensor 1  Temp: ");
+  Serial.print(temp1);
+  Serial.print(" C   Humidity: ");
+  Serial.print(hum1);
   Serial.println(" %");
 
-  Serial.print("External Temp: ");
-  Serial.print(tempExternal);
-  Serial.println(" C");
-
-  Serial.print("External RH: ");
-  Serial.print(humExternal);
+  // Print sensor 2
+  Serial.print("Sensor 2  Temp: ");
+  Serial.print(temp2);
+  Serial.print(" C   Humidity: ");
+  Serial.print(hum2);
   Serial.println(" %");
 
-  Serial.print("Water Sensor: ");
-  Serial.println(waterLevel);
+  // Print water sensor
+  Serial.print("Water Sensor Value: ");
+  Serial.println(waterValue);
+
+  // Simple leak indication
+  if (waterValue > 300) {
+    Serial.println("WARNING - WATER DETECTED");
+  } else {
+    Serial.println("No water detected");
+  }
+
+  Serial.println("--------------------------------");
 
   delay(2000);
 }
