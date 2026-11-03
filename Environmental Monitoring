@@ -1,19 +1,43 @@
 #include "DHT.h"
+#include <LiquidCrystal.h>
 
 #define DHTTYPE DHT11
 
-#define DHTPIN1 2
-#define DHTPIN2 3
+// Sensors
+#define DHTPIN1 6
+#define DHTPIN2 7
 #define WATERPIN A0
+
+// LCD Wiring
+// RS = 12
+// E  = 11
+// D4 = 5
+// D5 = 4
+// D6 = 3
+// D7 = 2
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+// Alarm Thresholds
+const float LOW_TEMP_THRESHOLD = 5.0;
+const float HIGH_TEMP_THRESHOLD = 40.0;
+const int WATER_THRESHOLD = 300;
 
 DHT dht1(DHTPIN1, DHTTYPE);
 DHT dht2(DHTPIN2, DHTTYPE);
 
 void setup() {
+
   Serial.begin(9600);
 
   dht1.begin();
   dht2.begin();
+
+  lcd.begin(16, 2);
+  lcd.print("Climate Monitor");
+  lcd.setCursor(0, 1);
+  lcd.print("Starting...");
+  delay(2000);
+  lcd.clear();
 
   Serial.println("================================");
   Serial.println("Climate Monitor Starting");
@@ -22,17 +46,16 @@ void setup() {
 
 void loop() {
 
-  // Read temperature and humidity sensors
+  // Read sensors
   float temp1 = dht1.readTemperature();
   float hum1  = dht1.readHumidity();
 
   float temp2 = dht2.readTemperature();
   float hum2  = dht2.readHumidity();
 
-  // Read water sensor
   int waterValue = analogRead(WATERPIN);
 
-  // Check if either DHT sensor failed
+  // Serial diagnostics
   if (isnan(temp1) || isnan(hum1)) {
     Serial.println("Sensor 1 read failed!");
   }
@@ -41,31 +64,60 @@ void loop() {
     Serial.println("Sensor 2 read failed!");
   }
 
-  // Print sensor 1
   Serial.print("Sensor 1  Temp: ");
   Serial.print(temp1);
   Serial.print(" C   Humidity: ");
   Serial.print(hum1);
   Serial.println(" %");
 
-  // Print sensor 2
   Serial.print("Sensor 2  Temp: ");
   Serial.print(temp2);
   Serial.print(" C   Humidity: ");
   Serial.print(hum2);
   Serial.println(" %");
 
-  // Print water sensor
   Serial.print("Water Sensor Value: ");
   Serial.println(waterValue);
 
-  // Simple leak indication
-  if (waterValue > 300) {
+  // Determine cabinet status
+  String state = "NORMAL";
+
+  float avgTemp = (temp1 + temp2) / 2.0;
+
+  if (waterValue > WATER_THRESHOLD) {
+    state = "WATER ALERT";
     Serial.println("WARNING - WATER DETECTED");
-  } else {
-    Serial.println("No water detected");
+  }
+  else if (avgTemp < LOW_TEMP_THRESHOLD) {
+    state = "LOW TEMP";
+  }
+  else if (avgTemp > HIGH_TEMP_THRESHOLD) {
+    state = "HIGH TEMP";
   }
 
+  // LCD Display
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  lcd.print("T:");
+  lcd.print(avgTemp, 1);
+  lcd.print((char)223);
+  lcd.print("C");
+
+  lcd.setCursor(9, 0);
+  lcd.print("W:");
+  lcd.print(waterValue);
+
+  lcd.setCursor(0, 1);
+  lcd.print(state);
+
+  Serial.print("Status: ");
+  Serial.println(state);
+
+  Serial.println("--------------------------------");
+
+  delay(2000);
+}
   Serial.println("--------------------------------");
 
   delay(2000);
