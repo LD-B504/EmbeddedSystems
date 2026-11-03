@@ -4,6 +4,9 @@
 #define DHTTYPE DHT11
 
 // Sensors
+// External Climate Sensor = 6
+// Internal Climate Sensor = 7
+// Internal Water Sensor = A0
 #define DHTPIN1 6
 #define DHTPIN2 7
 #define WATERPIN A0
@@ -79,19 +82,21 @@ void loop() {
   Serial.print("Water Sensor Value: ");
   Serial.println(waterValue);
 
+  // Internal cabinet conditions
+  float internalTemp = temp2;
+  float internalHum = hum2;
+
   // Determine cabinet status
   String state = "NORMAL";
-
-  float avgTemp = (temp1 + temp2) / 2.0;
 
   if (waterValue > WATER_THRESHOLD) {
     state = "WATER ALERT";
     Serial.println("WARNING - WATER DETECTED");
   }
-  else if (avgTemp < LOW_TEMP_THRESHOLD) {
+  else if (internalTemp < LOW_TEMP_THRESHOLD) {
     state = "LOW TEMP";
   }
-  else if (avgTemp > HIGH_TEMP_THRESHOLD) {
+  else if (internalTemp > HIGH_TEMP_THRESHOLD) {
     state = "HIGH TEMP";
   }
 
@@ -100,13 +105,14 @@ void loop() {
 
   lcd.setCursor(0, 0);
   lcd.print("T:");
-  lcd.print(avgTemp, 1);
+  lcd.print(internalTemp, 1);
   lcd.print((char)223);
   lcd.print("C");
 
   lcd.setCursor(9, 0);
-  lcd.print("W:");
-  lcd.print(waterValue);
+  lcd.print("H:");
+  lcd.print((int)internalHum);
+  lcd.print("%");
 
   lcd.setCursor(0, 1);
   lcd.print(state);
@@ -114,10 +120,6 @@ void loop() {
   Serial.print("Status: ");
   Serial.println(state);
 
-  Serial.println("--------------------------------");
-
-  delay(2000);
-}
   Serial.println("--------------------------------");
 
   delay(2000);
