@@ -23,7 +23,7 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 // Alarm Thresholds
 const float LOW_TEMP_THRESHOLD = 5.0;
 const float HIGH_TEMP_THRESHOLD = 40.0;
-const int WATER_THRESHOLD = 300;
+const int WATER_THRESHOLD = 800;
 
 DHT dht1(DHTPIN1, DHTTYPE);
 DHT dht2(DHTPIN2, DHTTYPE);
@@ -89,7 +89,7 @@ void loop() {
   // Determine cabinet status
   String state = "NORMAL";
 
-  if (waterValue > WATER_THRESHOLD) {
+  if (waterValue < WATER_THRESHOLD) {
     state = "WATER ALERT";
     Serial.println("WARNING - WATER DETECTED");
   }
@@ -119,6 +119,11 @@ void loop() {
 
   Serial.print("Status: ");
   Serial.println(state);
+
+  Serial.println("--------------------------------");
+
+  delay(2000);
+}
 
   Serial.println("--------------------------------");
 
